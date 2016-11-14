@@ -13,6 +13,8 @@ window.onload = function() {
         PIBY4 = Math.PI/4;
 
     var sceneUpdate = true;
+    var tickCounter = 0;
+    var mlRunItems = 0;
 
     function initGL(canvas) {
         try {
@@ -114,47 +116,127 @@ window.onload = function() {
 
     var gridVertexPositionBuffer;
     var gridVertexColorBuffer;
+    var axisLinesBuffer;
+    var axisColorBuffer;
+    var mlLineBuffer;
+    var mlColorBuffer;
 
     function initBuffers() {
+        var dataset = createVertices();
+        var axis = getAxisSetup(dataset);
+
         gridVertexPositionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, gridVertexPositionBuffer);
-        var dataset = createVertices();
-
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(dataset.vertices), gl.STATIC_DRAW);
         gridVertexPositionBuffer.itemSize = 3;
         gridVertexPositionBuffer.numItems = dataset.vertices.length / gridVertexPositionBuffer.itemSize;
 
         gridVertexColorBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, gridVertexColorBuffer);
-
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(dataset.colors), gl.STATIC_DRAW);
         gridVertexColorBuffer.itemSize = 4;
         gridVertexColorBuffer.numItems = dataset.colors.length / gridVertexColorBuffer.itemSize;
+
+        axisLinesBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, axisLinesBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(axis.axisLines), gl.STATIC_DRAW);
+        axisLinesBuffer.itemSize = 3;
+        axisLinesBuffer.numItems = axis.axisLines.length / axisLinesBuffer.itemSize;
+
+        axisColorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, axisColorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(axis.lineColor), gl.STATIC_DRAW);
+        axisColorBuffer.itemSize = 4;
+        axisColorBuffer.numItems = axis.lineColor.length / axisColorBuffer.itemSize;
+
+        mlLineBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, mlLineBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(dataset.mlRun), gl.STATIC_DRAW);
+        mlLineBuffer.itemSize = 3;
+        mlLineBuffer.numItems = dataset.mlRun.length / mlLineBuffer.itemSize;
+        mlLineBuffer.runLength = 2;
+
+        mlColorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, mlColorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(dataset.mlColor), gl.STATIC_DRAW);
+        mlColorBuffer.itemSize = 4;
+        mlColorBuffer.numItems = dataset.mlColor.length / mlColorBuffer.itemSize;
+    }
+
+    function getAxisSetup(dataset){
+        var lineVertices = [];
+
+        lineVertices = lineVertices.concat([Math.min(dataset.domains.x[0], 0), 0.0, 0.0]);
+        lineVertices = lineVertices.concat([Math.max(dataset.domains.x[1]+(dataset.domains.x[1]-dataset.domains.x[0])/8, 0), 0.0, 0.0]);
+        lineVertices = lineVertices.concat([0.0, Math.min(dataset.domains.y[0], 0), 0.0]);
+        lineVertices = lineVertices.concat([0.0, Math.max(dataset.domains.y[1]+(dataset.domains.y[1]-dataset.domains.y[0])/8, 0), 0.0]);
+        lineVertices = lineVertices.concat([0.0, 0.0, Math.min(dataset.domains.z[0], 0)]);
+        lineVertices = lineVertices.concat([0.0, 0.0, Math.max(dataset.domains.z[1]+(dataset.domains.z[1]-dataset.domains.z[0])/8, 0)]);
+
+        var color = [
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0
+        ];
+        return {
+            axisLines: lineVertices,
+            lineColor: color
+        };
     }
 
     function drawScene() {
         gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
+        gl.lineWidth(1);
         mat4.identity(mvMatrix);
+        mat4.translate(mvMatrix, [-10.0, 0.0, -1.5 * zCenter]);
+        mat4.rotate(mvMatrix, rotationalParam[0] - PIBY4, [1, 0, 0]);   //Rotate on X
+        mat4.rotate(mvMatrix, rotationalParam[1], [0, 1, 0]);           //Rotate on Y
+        mat4.rotate(mvMatrix, rotationalParam[2] - PIBY4, [0, 0, 1]);   //Rotate on Z
+        setMatrixUniforms();
 
         gl.bindBuffer(gl.ARRAY_BUFFER, gridVertexPositionBuffer);
         gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, gridVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
         gl.bindBuffer(gl.ARRAY_BUFFER, gridVertexColorBuffer);
         gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, gridVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-        mat4.translate(mvMatrix, [0.0, -zCenter/4.0, -zCenter]);
-
-        mat4.rotate(mvMatrix, rotationalParam[0] - PIBY2, [1, 0, 0]);
-        mat4.rotate(mvMatrix, rotationalParam[1], [0, 1, 0]);
-        mat4.rotate(mvMatrix, rotationalParam[2] + PIBY4, [0, 0, 1]);
-        setMatrixUniforms();
         gl.drawArrays(gl.LINE_STRIP, 0, gridVertexPositionBuffer.numItems);
+
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, axisLinesBuffer);
+        gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, axisLinesBuffer.itemSize, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, axisColorBuffer);
+        gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, axisColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.LINES, 0, axisLinesBuffer.numItems);
     }
 
+    function drawMLRun(){
+        gl.lineWidth(2);
+        gl.bindBuffer(gl.ARRAY_BUFFER, mlLineBuffer);
+        gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, mlLineBuffer.itemSize, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, mlColorBuffer);
+        gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, mlColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.LINE_STRIP, 0, mlLineBuffer.runLength);
+    }
+
+    var lastTime = new Date().getTime();
+
     function tick() {
+
+        if (mlLineBuffer.runLength < mlLineBuffer.numItems){
+            var timeNow = new Date().getTime();
+            if((timeNow - lastTime) > (2 * Math.pow(mlLineBuffer.runLength, 1.5))) {
+                lastTime = timeNow;
+                mlLineBuffer.runLength ++;
+                sceneUpdate = true;
+            }
+        }
+
         if (sceneUpdate) {
             drawScene();
+            drawMLRun();
             sceneUpdate = false;
         }
         rotateView();

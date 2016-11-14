@@ -1,6 +1,8 @@
 //stub
 function stub(x, y){
-    return x*x + y*y;
+    x = x - 10;
+    y = y - 10;
+    return x*x + y*y + 50;
 }
 
 //Stub
@@ -10,8 +12,8 @@ function getErrorDataSet(){
     var min, max;
     var error;
 
-    for(i=-10; i<10; i++){
-        for(j=-10; j<10; j++){
+    for(i=0; i<20; i++){
+        for(j=0; j<20; j++){
             error = stub(i,j);
             error = error/20.0;
             max = Math.max(max || error, error);
@@ -20,12 +22,12 @@ function getErrorDataSet(){
         }
     }
 
-    out.xDomain = [-10, 10];
+    out.xDomain = [0, 20];
     out.xStepSize = 1;
-    out.yDomain = [-10, 10];
+    out.yDomain = [0, 20];
     out.yStepSize = 1;
     out.zColorDomain = [[0.6, 1.0, 0.3, 1.0], [1.0, 0.0, 0.3, 1.0]];
-    out.zRange = [min, max];
+    out.zDomain = [min, max];
     return out;
 }
 
@@ -33,10 +35,12 @@ function createVertices() {
     var dataSet = getErrorDataSet();
     var vertices = [];
     var color = [];
+    var startX = 2, startY = 4;
+    var mlRun = [];
 
     var xSize = (dataSet.xDomain[1] - dataSet.xDomain[0])/dataSet.xStepSize,
         ySize = (dataSet.yDomain[1] - dataSet.yDomain[0])/dataSet.yStepSize,
-        zSize = dataSet.zRange[1] - dataSet.zRange[0],
+        zSize = dataSet.zDomain[1] - dataSet.zDomain[0],
         zStepSize = 1 / zSize,
         colorRange = [
             (dataSet.zColorDomain[1][0] - dataSet.zColorDomain[0][0]),
@@ -45,14 +49,18 @@ function createVertices() {
             (dataSet.zColorDomain[1][3] - dataSet.zColorDomain[0][3])
         ];
 
-    var i, j, index, colorSteps;
+    var i, j, z, index, colorSteps;
+
+    mlRun = mlRun.concat(dataSet[startX * ySize + startY]);
+    mlColor = [1.0, 1.0, 1.0, 1.0];
 
     for(i = 0; i < xSize; i++){
         vertices = vertices.concat(dataSet[i * ySize]);
         color = color.concat([0.0, 0.0, 0.0, 0.0]);
         for(j = 0; j < ySize; j++){
             index = i * ySize + j;
-            singularSteps = (dataSet[index][2] - dataSet.zRange[0]) * zStepSize;
+            z = dataSet[index][2];
+            singularSteps = (z - dataSet.zDomain[0]) * zStepSize;
             vertices = vertices.concat(dataSet[index]);
             color = color.concat([
                 dataSet.zColorDomain[0][0] + colorRange[0] * singularSteps,
@@ -60,6 +68,12 @@ function createVertices() {
                 dataSet.zColorDomain[0][2] + colorRange[2] * singularSteps,
                 dataSet.zColorDomain[0][3] + colorRange[3] * singularSteps
             ]);
+            if (Math.abs(startX - i) < 5 && Math.abs(startY - j) < 5 && z < mlRun[mlRun.length - 1]) {
+                startX = i;
+                startY = j;
+                mlRun = mlRun.concat([startX, startY, dataSet[startX * ySize + startY][2]+0.1]);
+                mlColor = mlColor.concat([1.0, 1.0, 1.0, 1.0]);
+            }
         }
         vertices = vertices.concat(dataSet[i * ySize + ySize - 1]);
         color = color.concat([0.0, 0.0, 0.0, 0.0]);
@@ -95,6 +109,13 @@ function createVertices() {
     }
     return {
         vertices: vertices,
-        colors: color
+        colors: color,
+        domains: {
+            x: dataSet.xDomain,
+            y: dataSet.yDomain,
+            z: dataSet.zDomain
+        },
+        mlRun: mlRun,
+        mlColor: mlColor
     };
 }

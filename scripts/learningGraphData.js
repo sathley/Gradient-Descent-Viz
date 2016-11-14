@@ -11,13 +11,13 @@ function getErrorDataSet(){
     var error;
 
     for(i=-10; i<10; i++){
-      for(j=-10; j<10; j++){
-        error = stub(i,j);
-        error = error/20.0;
-        max = Math.max(max || error, error);
-        min = Math.min(min || error, error);
-        out.push([i, j, error]);
-      }
+        for(j=-10; j<10; j++){
+            error = stub(i,j);
+            error = error/20.0;
+            max = Math.max(max || error, error);
+            min = Math.min(min || error, error);
+            out.push([i, j, error]);
+        }
     }
 
     out.xDomain = [-10, 10];
@@ -48,10 +48,10 @@ function createVertices() {
     var i, j, index, colorSteps;
 
     for(i = 0; i < xSize; i++){
-        vertices = vertices.concat(dataSet[i * xSize]);
+        vertices = vertices.concat(dataSet[i * ySize]);
         color = color.concat([0.0, 0.0, 0.0, 0.0]);
         for(j = 0; j < ySize; j++){
-            index = i * xSize + j;
+            index = i * ySize + j;
             singularSteps = (dataSet[index][2] - dataSet.zRange[0]) * zStepSize;
             vertices = vertices.concat(dataSet[index]);
             color = color.concat([
@@ -61,7 +61,36 @@ function createVertices() {
                 dataSet.zColorDomain[0][3] + colorRange[3] * singularSteps
             ]);
         }
-        vertices = vertices.concat(dataSet[i * xSize + ySize - 1]);
+        vertices = vertices.concat(dataSet[i * ySize + ySize - 1]);
+        color = color.concat([0.0, 0.0, 0.0, 0.0]);
+    }
+    for(j = ySize; j > 0; j--){
+        index = (xSize - 1) * (ySize + 2) + j;
+        vIndex = index * 3;
+        cIndex = index * 4;
+        for(var k = 0; k < 3; k++){
+            vertices.push(vertices[vIndex + k]);
+        }
+        color = color.concat([0.0, 0.0, 0.0, 0.0]);
+        //Transpose
+        for(i = xSize - 1; i >= 0; i--){
+            index = i * (ySize + 2) + j;
+            vIndex = index * 3;
+            cIndex = index * 4;
+            for(var k = 0; k < 3; k++){
+                vertices.push(vertices[vIndex + k]);
+            }
+            for(var k = 0; k < 4; k++){
+                color.push(color[cIndex + k]);
+            }
+        }
+
+        index = j;
+        vIndex = index * 3;
+        cIndex = index * 4;
+        for(var k = 0; k < 3; k++){
+            vertices.push(vertices[vIndex + k]);
+        }
         color = color.concat([0.0, 0.0, 0.0, 0.0]);
     }
     return {

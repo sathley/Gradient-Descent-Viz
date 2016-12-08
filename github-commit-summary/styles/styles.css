@@ -1,0 +1,52 @@
+body {
+    width:100%;
+    height:100%;
+    margin: 0;
+    text-align: left;
+}
+
+h2 {
+    text-align: center;
+    margin: 10px 0 0;
+}
+
+.containers {
+    display: inline-block;
+    float: left;
+    height: 100%;
+}
+
+.positionContainers {
+    padding: 1%;
+    width: 98%;
+    height: 100%;
+}
+
+#vizContainer {
+    width: 75%;
+}
+
+#SettingsContainer {
+    width: 25%;
+}
+
+#SettingsContainer .positionContainers {
+    border-left: 2px solid rgba(0,0,0,0.2);
+}
+
+.form {
+    text-align: center;
+}
+
+.form .row{
+    padding: 8px 0;
+}
+
+.form .alignCenter{
+    text-align: center;
+}
+
+.form .form-input{
+    width: 80%;
+    margin-top: 4px;
+}

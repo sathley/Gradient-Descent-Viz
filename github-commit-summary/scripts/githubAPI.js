@@ -1,7 +1,13 @@
-function getRepoInfo(repoName) {
+function getRepoInfo(settings) {
+    repoName = settings.repoName;
     return $.Deferred(function(){
         promise = this;
-        data = JSON.parse(localStorage.getItem(repoName));
+        data = null;
+
+        if (settings.cacheEnabled) {
+            data = JSON.parse(localStorage.getItem(repoName));
+        }
+
         if (data != null) {
             setTimeout(function(){
                 promise.resolve(data);
@@ -46,7 +52,9 @@ function getProcessedData(settings) {
     lastWeek = 0;
     weeksSize = null;
     maxCommits = 0;
-    return getRepoInfo(settings.repoName).then(function(data){
+    maxAdditions = 0;
+    maxDeletions = 0;
+    return getRepoInfo(settings).then(function(data){
         data = data.slice(Math.max(data.length - settings.maxCollaborators - 1, 0), data.length - 1);
         data.forEach(function(author){
             if (weeksSize == null) {
@@ -57,11 +65,11 @@ function getProcessedData(settings) {
 
             var week = [];
             for(var i = weeksSize - 1; i >= (lastWeek + settings.weeksInSegments - 1); i -= settings.weeksInSegments) {
-                var aggregate = {additions: 0, deletion: 0, totalCommits: 0, week: 0};
+                var aggregate = {additions: 0, deletions: 0, totalCommits: 0, week: 0};
                 for(var j = 0; j < settings.weeksInSegments; j++) {
                     index = i - j;
                     aggregate.additions += author.weeks[index].a;
-                    aggregate.deletion += author.weeks[index].d;
+                    aggregate.deletions += author.weeks[index].d;
                     aggregate.totalCommits += author.weeks[index].c;
                     if (j == settings.weeksInSegments - 1) {
                         aggregate.week = author.weeks[index].w * 1000;
@@ -69,11 +77,15 @@ function getProcessedData(settings) {
                 }
                 week.unshift(aggregate);
                 maxCommits = Math.max(maxCommits, aggregate.totalCommits);
+                maxAdditions = Math.max(maxAdditions, aggregate.additions);
+                maxDeletions = Math.max(maxDeletions, aggregate.deletions);
             }
             author.weeks = week;
         });
         return {
             maxCommits: maxCommits,
+            maxAdditions: maxAdditions,
+            maxDeletions: maxDeletions,
             data: data
         };
     });

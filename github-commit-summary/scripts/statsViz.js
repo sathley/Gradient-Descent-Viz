@@ -2,10 +2,10 @@ $(function() {
     $("body").height(window.innerHeight).width(window.innerWidth);
 
     settings = {
-        repoName: "d3",
-        weeksInSegments: 21,
+        repoName: "tensorflow",
         maxCollaborators: 10,
-        maxNumberOfSegments: 15
+        maxNumberOfSegments: 12,
+        weeksInSegments: 4,
     };
 
     var contributorChart = contributorStats(settings);

@@ -23,18 +23,26 @@
                     </label>
                 </div>
                 <div class="row">
-                    <label>Maximum number of weeks in each cell
-                        <input name="weeksInSegments" class="form-input" type="number" />
-                    </label>
-                </div>
-                <div class="row">
                     <label>Maximum number of top collaborators
                         <input name="maxCollaborators" class="form-input" type="number" />
                     </label>
                 </div>
                 <div class="row">
+                    <label>Maximum number of cells to each contributor
+                        <input name="maxNumberOfSegments" class="form-input" type="number" />
+                    </label>
+                </div>
+                <div class="row">
+                    <label>Number of weeks in each cell (Aggregation)
+                        <input name="weeksInSegments" class="form-input" type="number" min="1" />
+                    </label>
+                </div>
+                <div class="row">
                     <button type="button" id="update-settings" class="form-input">Set Settings</button>
                 </div>
+            </div>
+            <div id="legends" class="legend-container">
+                <div class="header">Legend</div>
             </div>
         </div>
     </div>

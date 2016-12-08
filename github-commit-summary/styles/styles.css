@@ -50,3 +50,49 @@ h2 {
     width: 80%;
     margin-top: 4px;
 }
+
+#legends {
+    position: absolute;
+    bottom: 15px;
+    padding-left: 1%;
+    width: 24%;
+}
+
+.legend-container .header {
+    font-size: 1.5em;
+    text-align: center;
+    color: #5d5d5d;
+    padding-bottom: 20px;
+}
+
+.legend {
+    height: 1.3em;
+    margin: 2% -5% 0px;
+    padding-left: 5%;
+    transition: .4s linear;
+}
+
+.legend:hover {
+    background-color: rgba(0,0,0,0.1);
+}
+
+.legend a {
+    text-decoration: none;
+    color: #444;
+    height: 100%;
+    width: 100%;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.legend div {
+    display: inline-block;
+    margin: 0 5px;
+    vertical-align: middle;
+}
+
+.legend .palette {
+    height: 75%;
+    width: 2em;
+}
+

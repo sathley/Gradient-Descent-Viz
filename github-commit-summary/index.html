@@ -14,10 +14,10 @@
         <div class="positionContainers">
             <svg id="contributor-chart">
                 <defs>
-                    <linearGradient id="linear" x1="100%" y1="100%" x2="0%" y2="0%">
-                        <stop offset="0%"   stop-opacity="0.8" stop-color="steelblue" />
-                        <stop offset="80%" stop-opacity="0.2" stop-color="#417198" />
-                        <stop offset="100%" stop-opacity="0.01" stop-color="#455e73" />
+                    <linearGradient id="linear">
+                        <stop offset="0%"   stop-opacity="1" stop-color="steelblue" />
+                        <stop offset="50%" stop-opacity="0.8" stop-color="#417198" />
+                        <stop offset="100%" stop-opacity="0.05" stop-color="#455e73" />
                     </linearGradient>
                 </defs>
             </svg>
@@ -39,6 +39,15 @@
                 </div>
                 <div class="row">
                     <button type="button" id="update-settings" class="form-input">update</button>
+                </div>
+            </div>
+            <div class="legend">
+                <h2>Legend</h2>
+                <svg id="legendContainer"></svg>
+                <div class="description">
+                    <h3> Description </h3>
+                    A single slice displays last 30 weeks of github repository activity. This limitation is imposed by GitHub on it's public API's. A total of 100 contributors can be selected on the wheel.
+                    Links present at the center only exist for double actors events. Link direction is from Issue assigner to assignee and from a commenter to person mentioned in the issue comment. Direction is encoded as opacity of the link, from opaque to transparent.
                 </div>
             </div>
         </div>

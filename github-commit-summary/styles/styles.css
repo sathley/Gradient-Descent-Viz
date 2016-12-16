@@ -33,6 +33,7 @@ h2 {
 
 #SettingsContainer .positionContainers {
     border-left: 2px solid rgba(0,0,0,0.2);
+    overflow: auto;
 }
 
 .form {
@@ -52,55 +53,18 @@ h2 {
     margin-top: 4px;
 }
 
-#legends {
-    position: absolute;
-    bottom: 15px;
-    padding-left: 1%;
-    width: 24%;
-}
-
-.legend-container .header {
-    font-size: 1.5em;
-    text-align: center;
-    color: #5d5d5d;
-    padding-bottom: 20px;
-}
-
-.legend {
-    height: 1.3em;
-    margin: 2% -5% 0px;
-    padding-left: 5%;
-    transition: .4s linear;
-}
-
-.legend:hover {
-    background-color: rgba(0,0,0,0.1);
-}
-
-.legend a {
-    text-decoration: none;
-    color: #444;
-    height: 100%;
-    width: 100%;
-    display: inline-block;
-    cursor: pointer;
-}
-
-.legend div {
-    display: inline-block;
-    margin: 0 5px;
-    vertical-align: middle;
-}
-
-.legend .palette {
-    height: 75%;
-    width: 2em;
-}
-
 .eventLink {
     /*stroke: steelblue;*/
     fill: none;
     pointer-events: none;
+}
+
+.highlighting .eventLink {
+    opacity: 0;
+}
+
+.highlighting .highlight {
+    opacity: 1;
 }
 
 .contributorBG {
@@ -115,8 +79,16 @@ h2 {
     fill-opacity: 0.1;
 }
 
+.addDelAxis, .commitAxis {
+    stroke: #000;
+    stroke-width: 1;
+    fill: none;
+    opacity: 0.2;
+}
+
 .contributorBG.comparing {
     stroke-opacity: 0.4;
+    fill-opacity: 0.1;
 }
 
 .weeklyEvent.noWeekEvent{
@@ -125,16 +97,15 @@ h2 {
 }
 
 .weeklyEvent.singleActors {
-    fill: #a8d669;
+    fill: #8cc73b;
 }
 
 .weeklyEvent.doubleActors {
-    fill: #84bfe6;
+    fill: #5aabe0;
 }
 
 .additions{
     fill: #88e47c;
-    fill-opacity: 0.8:
 }
 
 .deletions{
@@ -150,4 +121,20 @@ h2 {
 
 .authors {
     text-anchor: middle;
+}
+
+#legendContainer text {
+    font-size: 0.7em;
+    text-anchor: middle;
+}
+
+.legend{
+    margin-top: 20%;
+}
+
+.description{
+    color: #424242;
+    text-align: justify;
+    padding: 6%;
+    font-size: 0.9em;
 }

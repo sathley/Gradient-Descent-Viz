@@ -27,10 +27,12 @@ $(function(){
 });
 
 function graphGenerator(){
-    var margins = 50,
-        diameter = Math.min(window.innerWidth, window.innerHeight) - (2 * margins),
+    var boundary = Math.min($("#vizContainer").width(), $("#vizContainer").height()),
+        margins = boundary * 0.062,
+        diameter = boundary - (2 * margins),
         outerRadius = diameter / 2,
-        innerRadius = outerRadius - 160;
+        radiusDelta = diameter * 0.229,
+        innerRadius = outerRadius - radiusDelta;
 
     var pie = d3.layout.pie()
         .sort(null)
@@ -125,6 +127,8 @@ function graphGenerator(){
                 });
 
         d3ContributorNodesEnter.append("path").attr("class", "commitBG");
+        d3ContributorNodesEnter.append("path").attr("class", "commitAxis");
+        d3ContributorNodesEnter.append("path").attr("class", "addDelAxis");
 
         d3ContributorNodesEnter.append("text")
             .attr("class", "authors")
@@ -158,7 +162,22 @@ function graphGenerator(){
 
 
         /**** Contributor Commits/Additions/Deletions ****/
-        logScale.domain([1, maxDeletion]).range([innerRadius + 75, innerRadius + 45]);
+        logScale.domain([1, maxDeletion]).range([innerRadius + (radiusDelta * 0.47), innerRadius + (radiusDelta * 0.28)]);
+
+        d3ContributorNodes.selectAll(".addDelAxis")
+            .attr("d", function(d){
+                var perAngle = (d.endAngle - d.startAngle - d.padAngle)/d.weeks.length;
+                var halfAngle = perAngle/2;
+                var startAngle = d.startAngle + halfAngle + d.padAngle/2;
+
+                line.radius(function(week, i){
+                    return logScale(1);
+                }).angle(function(week, i){
+                    return startAngle + (perAngle * i);
+                });
+                return line(d.weeks);
+            });
+
         d3ContributorNodesEnter.append("path").attr("class", "deletions");
         d3ContributorNodes.selectAll(".deletions")
             .transition().duration(750)
@@ -178,7 +197,7 @@ function graphGenerator(){
                 return area(d.weeks);
             });
 
-        logScale.domain([1, maxAddition]).range([innerRadius + 75, innerRadius + 105]);
+        logScale.domain([1, maxAddition]).range([innerRadius + (radiusDelta * 0.47), innerRadius + (radiusDelta * 0.66)]);
         d3ContributorNodesEnter.append("path").attr("class", "additions");
         d3ContributorNodes.selectAll(".additions")
             .transition().duration(750)
@@ -198,10 +217,25 @@ function graphGenerator(){
                 return area(d.weeks);
             });
 
-        logScale.domain([1, maxCommit]).range([innerRadius + 120, innerRadius + 150]);
-        arc.innerRadius(innerRadius + 110).outerRadius(innerRadius + 160);
+        logScale.domain([1, maxCommit]).range([innerRadius + (radiusDelta * 0.75), innerRadius + (radiusDelta * 0.95)]);
+        arc.innerRadius(innerRadius + (radiusDelta * 0.70)).outerRadius(innerRadius + radiusDelta);
         d3ContributorNodes.selectAll(".commitBG")
             .attr("d", arc);
+
+        d3ContributorNodes.selectAll(".commitAxis")
+            .attr("d", function(d){
+                var perAngle = (d.endAngle - d.startAngle - d.padAngle)/d.weeks.length;
+                var halfAngle = perAngle/2;
+                var startAngle = d.startAngle + halfAngle + d.padAngle/2;
+
+                line.radius(function(week, i){
+                    return logScale(1);
+                }).angle(function(week, i){
+                    return startAngle + (perAngle * i);
+                });
+                return line(d.weeks);
+            });
+
         d3ContributorNodesEnter.append("path").attr("class", "commits");
         d3ContributorNodes.selectAll(".commits")
             .transition().duration(750)
@@ -222,7 +256,7 @@ function graphGenerator(){
 
 
         /**** Week Events ****/
-        logScale.domain([1, maxWeekEvent]).range([innerRadius, innerRadius + 40]);
+        logScale.domain([1, maxWeekEvent]).range([innerRadius, innerRadius + (radiusDelta * 0.25)]);
 
         var d3WeekNodes = d3ContributorNodes.selectAll(".weekNode").data(function(d){
             return d.children;
@@ -286,22 +320,68 @@ function graphGenerator(){
 
         d3EventLinks
             .transition().duration(750)
-            .attr("stroke", "url(#linear)")
+            .attr("stroke", function(d){
+                return "url(#" + d.source.parent.author + d.target.parent.author + d.source.week + ")";
+            })
             .style("stroke-width", function(d){
                 return (d.source.endAngle - d.source.startAngle) * 100;
             })
             .attr("d", edgeBundles);
 
         d3EventLinks.exit().remove();
+
+        /*** link gradients ***/
+
+        var d3EventLinksGradients = d3.select("#contributor-chart defs").selectAll(".linearGradients")
+            .data(bundle(getLinks(nodes, weekOnly)), function(d){
+                d.source = d[0], d.target = d[d.length - 1];
+                return d.source.parent.author + " " + d.target.parent.author + " " + (d.source[weekOnly ? "week" : "timestamp"]);
+            });
+
+        d3EventLinksGradients.enter()
+            .append("linearGradient")
+            .attr("class", "linearGradients")
+            .attr("id", function(d){
+                return d.source.parent.author + d.target.parent.author + d.source.week;
+            })
+            .attr("xlink:href", "#linear");
+
+        d3EventLinksGradients
+            .attr("x1", function(d){
+                return Math.ceil(Math.cos(d.source.angle - Math.PI/2));
+            })
+            .attr("y1", function(d){
+                return Math.ceil(Math.sin(d.source.angle - Math.PI/2));
+            })
+            .attr("x2", function(d){
+                return Math.ceil(Math.cos(d.target.angle - Math.PI/2));
+            })
+            .attr("y2", function(d){
+                return Math.ceil(Math.sin(d.target.angle - Math.PI/2));
+            })
+
+        d3EventLinksGradients.exit().remove();
         /**** Week Event Links ****/
 
+
+
+        d3WeekNodes.on("mouseover", function(d) {
+            var link = d3EventLinks.filter(function(link){
+                return (link.source.parent.author === d.parent.author || link.target.parent.author === d.parent.author) && link.source.week === d.week;
+            });
+            svg.select(".links").attr("class", "links highlighting");
+            link.attr("class", "eventLink highlight");
+        }).on("mouseout", function(d){
+            svg.select(".links").attr("class", "links");
+            d3EventLinks.attr("class", "eventLink");
+        });
 
         d3ContributorNodes.on("mouseover", function(d){
             var text = d3.select(this).selectAll("text");
             text.select("textPath").remove("textPath");
             text
                 .attr("transform", "rotate(" + (d.angle * 180 / Math.PI) + ")")
-                .attr("y", -(outerRadius + 20))
+                .attr("y", -(outerRadius + (boundary * 0.025)))
                 .text(function(d){
                     return d.author;
                 });
@@ -310,12 +390,153 @@ function graphGenerator(){
             text.text(null);
             text.attr("transform", null)
                 .attr("y", null)
-            text.attr("dy", -10)
+            text.attr("dy", -(boundary * 0.012))
                 .append("textPath")
                 .attr("xlink:href", "#" + d.author + "contributorBorder")
                 .attr("startOffset", (d.angle - d.startAngle) * outerRadius)
                 .text(d.author.substring(0,Math.round((d.endAngle - d.startAngle) * outerRadius / 10)));
         });
+        /*********** Chart complete **********/
+
+
+        var legend = d3.select("#legendContainer")
+            .attr("width", $("#vizForm").width())
+            .attr("height", outerRadius - 2 * margins);
+
+        legend.select("g").remove();
+        legend = legend.append("g").attr("transform", "translate(" + ($("#vizForm").width()/2) + ", " + (outerRadius + margins) + ")");
+        legend = legend.append("g").attr("transform", "rotate(" + (-author.angle * (180/Math.PI)) + ")");
+
+        var datum = d3.select(d3ContributorNodesEnter[0][0]).datum();
+
+        var legendData = {
+            startAngle: datum.startAngle,
+            endAngle: datum.endAngle,
+            padAngle: datum.padAngle,
+            angle: datum.angle
+        };
+
+        arc.innerRadius(innerRadius).outerRadius(outerRadius);
+        legend.append("path")
+            .attr("id", "legendContibutorBG")
+            .attr("class", "contributorBG")
+            .attr("d", arc(legendData));
+        legend.append("text")
+            .attr("class", "authors")
+            .attr("dy", -(boundary * 0.012))
+            .append("textPath")
+             .attr("xlink:href", "#legendContibutorBG")
+             .attr("startOffset", (legendData.angle - legendData.startAngle) * outerRadius)
+             .text("Contributor's ID");
+
+        arc.innerRadius(innerRadius).outerRadius(innerRadius + (radiusDelta * 0.25));
+        legend.append("path")
+            .attr("id", "legendWeeklyEvent")
+            .attr("class", "noWeekEvent weeklyEvent")
+            .attr("d", arc(legendData));
+
+        //
+        legend.append("path")
+            .attr("id", "legendWeeklyEvent")
+            .attr("class", "singleActors weeklyEvent")
+            .attr("d", arc({
+                startAngle: datum.startAngle,
+                endAngle: (datum.endAngle - datum.startAngle) * 0.1
+            }));
+
+        legend.append("path")
+            .attr("id", "legendWeeklyEvent")
+            .attr("class", "doubleActors weeklyEvent")
+            .attr("d", arc({
+                startAngle: datum.endAngle - (datum.endAngle - datum.startAngle) * 0.1,
+                endAngle: datum.endAngle
+            }));
+
+        legend.append("text")
+            .attr("dy", (boundary * 0.046))
+            .append("textPath")
+             .attr("xlink:href", "#legendWeeklyEvent")
+             .attr("startOffset", (legendData.angle - legendData.startAngle) * (innerRadius + (radiusDelta * 0.25)))
+             .text("0 Events");
+        legend.append("text")
+            .attr("transform", "rotate(" + (author.angle * (180/Math.PI)) + ")")
+            .attr("x", innerRadius * Math.cos(legendData.startAngle - Math.PI/2))
+            .attr("y", innerRadius * Math.sin(legendData.startAngle - Math.PI/2))
+            .attr("dx", (-boundary * 0.08))
+            .attr("dy", (boundary * 0.01))
+            .style("text-anchor", "end")
+            .text("Single Actor Events");
+
+        legend.append("text")
+            .attr("transform", "rotate(" + (author.angle * (180/Math.PI)) + ")")
+            .attr("x", innerRadius * Math.cos(legendData.startAngle - Math.PI/2))
+            .attr("y", innerRadius * Math.sin(legendData.startAngle - Math.PI/2))
+            .attr("dx", (boundary * 0.08))
+            .attr("dy", (boundary * 0.01))
+            .style("text-anchor", "start")
+            .text("Double Actor Events");
+
+        legend.append("text")
+            .attr("dy", (boundary * 0.013))
+            .append("textPath")
+             .attr("xlink:href", "#legendWeeklyEvent")
+             .attr("startOffset", (legendData.angle - legendData.startAngle) * (innerRadius + (radiusDelta * 0.25)))
+             .text(maxWeekEvent + " Events");
+
+        arc.innerRadius(innerRadius + (radiusDelta * 0.28)).outerRadius(innerRadius + (radiusDelta * 0.47));
+        legend.append("path")
+            .attr("id", "legendDeletions")
+            .attr("class", "deletions")
+            .attr("d", arc(legendData));
+
+        legend.append("text")
+            .attr("dy", (boundary * 0.035))
+            .append("textPath")
+             .attr("xlink:href", "#legendDeletions")
+             .attr("startOffset", (legendData.angle - legendData.startAngle) * (innerRadius + (radiusDelta * 0.47)))
+             .text(maxDeletion + " Deletions");
+
+        arc.innerRadius(innerRadius + (radiusDelta * 0.47)).outerRadius(innerRadius + (radiusDelta * 0.66));
+        legend.append("path")
+            .attr("id", "legendAdditions")
+            .attr("class", "additions")
+            .attr("d", arc(legendData));
+        legend.append("text")
+            .attr("dy", (boundary * 0.014))
+            .append("textPath")
+             .attr("xlink:href", "#legendAdditions")
+             .attr("startOffset", (legendData.angle - legendData.startAngle) * (innerRadius + (radiusDelta * 0.66)))
+             .text(maxAddition + " Additions");
+        legend.append("text")
+            .append("textPath")
+             .attr("xlink:href", "#legendDeletions")
+             .attr("startOffset", (legendData.angle - legendData.startAngle) * (innerRadius + (radiusDelta * 0.47)))
+             .text("0 Addition/Deletion");
+
+
+        arc.innerRadius(innerRadius + (radiusDelta * 0.70)).outerRadius(outerRadius);
+        legend.append("path")
+            .attr("id", "legendCommitBg")
+            .attr("class", "commitBG")
+            .attr("d", arc(legendData));
+
+        arc.innerRadius(innerRadius + (radiusDelta * 0.75)).outerRadius(innerRadius + (radiusDelta * 0.95));
+        legend.append("path")
+            .attr("id", "commitAxis")
+            .attr("class", "commitAxis")
+            .attr("d", arc(legendData));
+        legend.append("text")
+            .attr("dy", (boundary * 0.035))
+            .append("textPath")
+             .attr("xlink:href", "#commitAxis")
+             .attr("startOffset", (legendData.angle - legendData.startAngle) * (innerRadius + (radiusDelta * 0.95)))
+             .text(0 + " Commits");
+        legend.append("text")
+            .attr("dy", (boundary * 0.015))
+            .append("textPath")
+             .attr("xlink:href", "#commitAxis")
+             .attr("startOffset", (legendData.angle - legendData.startAngle) * (innerRadius + (radiusDelta * 0.95)))
+             .text(maxCommit + " Commits");
     }
 
     function getEventNodes(tree, depth, weekOnly){
@@ -331,7 +552,7 @@ function graphGenerator(){
             tree.radius = weekOnly ? (innerRadius/2) : innerRadius;
         } else if (depth === 2 || depth === 3) {
             tree.angle = (tree.startAngle + tree.endAngle)/2;
-            tree.radius = weekOnly ? innerRadius : outerRadius + 20;
+            tree.radius = weekOnly ? innerRadius : outerRadius + (boundary * 0.044);
         }
 
         if (tree.children != null && typeof tree.children === "string") {

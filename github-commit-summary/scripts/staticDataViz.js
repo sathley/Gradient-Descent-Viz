@@ -398,145 +398,154 @@ function graphGenerator(){
         });
         /*********** Chart complete **********/
 
+        makeLegend({
+            startAngle: 0,
+            endAngle: 0.6283185307179587,
+            padAngle: 0.01884955592153876,
+            angle: 0.31415926535897937,
+            maxDeletion: maxDeletion,
+            maxAddition: maxAddition,
+            maxCommit: maxCommit,
+            maxWeekEvent: maxWeekEvent,
+            innerRadius: innerRadius,
+            outerRadius, outerRadius,
+            margins: margins,
+            boundary: boundary,
+            radiusDelta: radiusDelta
+        });
 
+    }
+
+    function makeLegend(lData) {
         var legend = d3.select("#legendContainer")
             .attr("width", $("#vizForm").width())
-            .attr("height", outerRadius - 2 * margins);
+            .attr("height", lData.outerRadius - 2 * lData.margins);
 
         legend.select("g").remove();
-        legend = legend.append("g").attr("transform", "translate(" + ($("#vizForm").width()/2) + ", " + (outerRadius + margins) + ")");
-        legend = legend.append("g").attr("transform", "rotate(" + (-author.angle * (180/Math.PI)) + ")");
-
-        var datum = d3.select(d3ContributorNodesEnter[0][0]).datum();
-
-        var legendData = {
-            startAngle: datum.startAngle,
-            endAngle: datum.endAngle,
-            padAngle: datum.padAngle,
-            angle: datum.angle
-        };
+        legend = legend.append("g").attr("transform", "translate(" + ($("#vizForm").width()/2) + ", " + (lData.outerRadius + lData.margins) + ")");
+        legend = legend.append("g").attr("transform", "rotate(" + (-lData.angle * (180/Math.PI)) + ")");
 
         arc.innerRadius(innerRadius).outerRadius(outerRadius);
         legend.append("path")
             .attr("id", "legendContibutorBG")
             .attr("class", "contributorBG")
-            .attr("d", arc(legendData));
+            .attr("d", arc(lData));
         legend.append("text")
             .attr("class", "authors")
-            .attr("dy", -(boundary * 0.012))
+            .attr("dy", -(lData.boundary * 0.012))
             .append("textPath")
              .attr("xlink:href", "#legendContibutorBG")
-             .attr("startOffset", (legendData.angle - legendData.startAngle) * outerRadius)
+             .attr("startOffset", (lData.angle - lData.startAngle) * lData.outerRadius)
              .text("Contributor's ID");
 
-        arc.innerRadius(innerRadius).outerRadius(innerRadius + (radiusDelta * 0.25));
+        arc.innerRadius(lData.innerRadius).outerRadius(lData.innerRadius + (lData.radiusDelta * 0.25));
         legend.append("path")
             .attr("id", "legendWeeklyEvent")
             .attr("class", "noWeekEvent weeklyEvent")
-            .attr("d", arc(legendData));
+            .attr("d", arc(lData));
 
         //
         legend.append("path")
             .attr("id", "legendWeeklyEvent")
             .attr("class", "singleActors weeklyEvent")
             .attr("d", arc({
-                startAngle: datum.startAngle,
-                endAngle: (datum.endAngle - datum.startAngle) * 0.1
+                startAngle: 0,
+                endAngle: lData.endAngle * 0.1
             }));
 
         legend.append("path")
             .attr("id", "legendWeeklyEvent")
             .attr("class", "doubleActors weeklyEvent")
             .attr("d", arc({
-                startAngle: datum.endAngle - (datum.endAngle - datum.startAngle) * 0.1,
-                endAngle: datum.endAngle
+                startAngle: lData.endAngle - lData.endAngle * 0.1,
+                endAngle: lData.endAngle
             }));
 
         legend.append("text")
             .attr("dy", (boundary * 0.046))
             .append("textPath")
              .attr("xlink:href", "#legendWeeklyEvent")
-             .attr("startOffset", (legendData.angle - legendData.startAngle) * (innerRadius + (radiusDelta * 0.25)))
+             .attr("startOffset", (lData.angle - lData.startAngle) * (lData.innerRadius + (lData.radiusDelta * 0.25)))
              .text("0 Events");
         legend.append("text")
-            .attr("transform", "rotate(" + (author.angle * (180/Math.PI)) + ")")
-            .attr("x", innerRadius * Math.cos(legendData.startAngle - Math.PI/2))
-            .attr("y", innerRadius * Math.sin(legendData.startAngle - Math.PI/2))
-            .attr("dx", (-boundary * 0.08))
-            .attr("dy", (boundary * 0.01))
+            .attr("transform", "rotate(" + (lData.angle * (180/Math.PI)) + ")")
+            .attr("x", lData.innerRadius * Math.cos(lData.startAngle - Math.PI/2))
+            .attr("y", lData.innerRadius * Math.sin(lData.startAngle - Math.PI/2))
+            .attr("dx", (-lData.boundary * 0.08))
+            .attr("dy", (lData.boundary * 0.01))
             .style("text-anchor", "end")
             .text("Single Actor Events");
 
         legend.append("text")
-            .attr("transform", "rotate(" + (author.angle * (180/Math.PI)) + ")")
-            .attr("x", innerRadius * Math.cos(legendData.startAngle - Math.PI/2))
-            .attr("y", innerRadius * Math.sin(legendData.startAngle - Math.PI/2))
-            .attr("dx", (boundary * 0.08))
-            .attr("dy", (boundary * 0.01))
+            .attr("transform", "rotate(" + (lData.angle * (180/Math.PI)) + ")")
+            .attr("x", lData.innerRadius * Math.cos(lData.startAngle - Math.PI/2))
+            .attr("y", lData.innerRadius * Math.sin(lData.startAngle - Math.PI/2))
+            .attr("dx", (lData.boundary * 0.08))
+            .attr("dy", (lData.boundary * 0.01))
             .style("text-anchor", "start")
             .text("Double Actor Events");
 
         legend.append("text")
-            .attr("dy", (boundary * 0.013))
+            .attr("dy", (lData.boundary * 0.013))
             .append("textPath")
              .attr("xlink:href", "#legendWeeklyEvent")
-             .attr("startOffset", (legendData.angle - legendData.startAngle) * (innerRadius + (radiusDelta * 0.25)))
-             .text(maxWeekEvent + " Events");
+             .attr("startOffset", (lData.angle - lData.startAngle) * (lData.innerRadius + (lData.radiusDelta * 0.25)))
+             .text(lData.maxWeekEvent + " Events");
 
-        arc.innerRadius(innerRadius + (radiusDelta * 0.28)).outerRadius(innerRadius + (radiusDelta * 0.47));
+        arc.innerRadius(lData.innerRadius + (lData.radiusDelta * 0.28)).outerRadius(lData.innerRadius + (lData.radiusDelta * 0.47));
         legend.append("path")
             .attr("id", "legendDeletions")
             .attr("class", "deletions")
-            .attr("d", arc(legendData));
+            .attr("d", arc(lData));
 
         legend.append("text")
-            .attr("dy", (boundary * 0.035))
+            .attr("dy", (lData.boundary * 0.035))
             .append("textPath")
              .attr("xlink:href", "#legendDeletions")
-             .attr("startOffset", (legendData.angle - legendData.startAngle) * (innerRadius + (radiusDelta * 0.47)))
-             .text(maxDeletion + " Deletions");
+             .attr("startOffset", (lData.angle - lData.startAngle) * (lData.innerRadius + (lData.radiusDelta * 0.47)))
+             .text(lData.maxDeletion + " Deletions");
 
-        arc.innerRadius(innerRadius + (radiusDelta * 0.47)).outerRadius(innerRadius + (radiusDelta * 0.66));
+        arc.innerRadius(lData.innerRadius + (lData.radiusDelta * 0.47)).outerRadius(lData.innerRadius + (lData.radiusDelta * 0.66));
         legend.append("path")
             .attr("id", "legendAdditions")
             .attr("class", "additions")
-            .attr("d", arc(legendData));
+            .attr("d", arc(lData));
         legend.append("text")
-            .attr("dy", (boundary * 0.014))
+            .attr("dy", (lData.boundary * 0.014))
             .append("textPath")
              .attr("xlink:href", "#legendAdditions")
-             .attr("startOffset", (legendData.angle - legendData.startAngle) * (innerRadius + (radiusDelta * 0.66)))
-             .text(maxAddition + " Additions");
+             .attr("startOffset", (lData.angle - lData.startAngle) * (lData.innerRadius + (lData.radiusDelta * 0.66)))
+             .text(lData.maxAddition + " Additions");
         legend.append("text")
             .append("textPath")
              .attr("xlink:href", "#legendDeletions")
-             .attr("startOffset", (legendData.angle - legendData.startAngle) * (innerRadius + (radiusDelta * 0.47)))
+             .attr("startOffset", (lData.angle - lData.startAngle) * (lData.innerRadius + (lData.radiusDelta * 0.47)))
              .text("0 Addition/Deletion");
 
 
-        arc.innerRadius(innerRadius + (radiusDelta * 0.70)).outerRadius(outerRadius);
+        arc.innerRadius(lData.innerRadius + (lData.radiusDelta * 0.70)).outerRadius(lData.outerRadius);
         legend.append("path")
             .attr("id", "legendCommitBg")
             .attr("class", "commitBG")
-            .attr("d", arc(legendData));
+            .attr("d", arc(lData));
 
-        arc.innerRadius(innerRadius + (radiusDelta * 0.75)).outerRadius(innerRadius + (radiusDelta * 0.95));
+        arc.innerRadius(lData.innerRadius + (lData.radiusDelta * 0.75)).outerRadius(lData.innerRadius + (lData.radiusDelta * 0.95));
         legend.append("path")
             .attr("id", "commitAxis")
             .attr("class", "commitAxis")
-            .attr("d", arc(legendData));
+            .attr("d", arc(lData));
         legend.append("text")
-            .attr("dy", (boundary * 0.035))
+            .attr("dy", (lData.boundary * 0.035))
             .append("textPath")
              .attr("xlink:href", "#commitAxis")
-             .attr("startOffset", (legendData.angle - legendData.startAngle) * (innerRadius + (radiusDelta * 0.95)))
+             .attr("startOffset", (lData.angle - lData.startAngle) * (lData.innerRadius + (lData.radiusDelta * 0.95)))
              .text(0 + " Commits");
         legend.append("text")
             .attr("dy", (boundary * 0.015))
             .append("textPath")
              .attr("xlink:href", "#commitAxis")
-             .attr("startOffset", (legendData.angle - legendData.startAngle) * (innerRadius + (radiusDelta * 0.95)))
-             .text(maxCommit + " Commits");
+             .attr("startOffset", (lData.angle - lData.startAngle) * (lData.innerRadius + (lData.radiusDelta * 0.95)))
+             .text(lData.maxCommit + " Commits");
     }
 
     function getEventNodes(tree, depth, weekOnly){
